@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;400;700;900&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div id="snake">
+        <div id="gameMarginTop"></div>
+        <div id="grid"></div>   
+        <div id="gameMarginBottom"></div>     
+    </div>
+
+
+    <style>
+        :root {
+            --main-red: #d03333;
+            --text-blue: #0f275d;
+            --text-red: #f0a9a9;
+            --light-gray: #ebebeb;
+            --col-amt: 10;
+            --cell-size: 20px;
+        }
+
+        #grid {
+            border: black 1pt solid;
+            width: fit-content;
+        }
+
+        * {
+            font-family: Geologica;
+        }
+
+        #letterMatch {
+            width: calc(var(--cell-size) * var(--col-amt));
+        }
+
+        #grid div {
+            grid-column: auto;
+            font-size: 25px;
+            text-align: center;
+            /* padding-top: 10px; */
+        }
+
+        #grid {
+            display: grid;
+            grid-column-gap: 3px;
+            grid-row-gap: 3px;
+            grid-template-columns: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
+            grid-template-rows: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
+        }
+        .snakeSegment {
+            background-color: var(--main-red);
+        }
+
+        .pointCell {
+            background-color: var(--text-blue);
+        }
+    </style>
+
+    <script> 
+
+        // global variables
+        let tick = 0;
+        let x = 30;
+        let y = 30;
+        const gridVolume = x * y;
+        let game = true;
+        let currentDirection = undefined;
+        let snakeLength = 5
+        let snakeArray = [];
+        let coordHistory = ['15,15','15,16','15,17','15,18','15,19',]
+
+        // key listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === "ArrowUp" && currentDirection != "down") {
+                // console.log("up");
+                currentDirection = "up";
+            } else if (e.code === "ArrowDown" && currentDirection != "up") {
+                // console.log("down");
+                currentDirection = "down";
+            } else if (e.code === "ArrowLeft" && currentDirection != "right") {
+                // console.log("left");
+                currentDirection = "left";
+            } else if (e.code === "ArrowRight" && currentDirection != "left") {
+                // console.log("right");
+                currentDirection = "right";
+            }
+        });
+
+        // css controlling
+        let setRootCss = (prop, val) => {
+            document.documentElement.style.setProperty(prop, val);
+        }
+
+        /////////////////////////////////////////////////
+        //////-------------- SNAKE ----------------//////
+        /////////////////////////////////////////////////
+
+        // base grid formation
+        let makeGrid = (x, y) => {
+
+            setRootCss('--col-amt', x);
+            let x_axis = 1;
+            let y_axis = 0;
+            for (i = 0; i < gridVolume; i++) {
+                if (i % x === 0) {
+                    x_axis = 0; 
+                    y_axis += 1
+                }
+                x_axis += 1
+                // const grid = document.createElement("div");
+                const gridItem = document.createElement('div');
+                // gridItem.setAttribute('id', i);
+                let coords = x_axis + "," + y_axis;
+                // gridItem.setAttribute('data-coords', coords);
+                gridItem.setAttribute('id', coords);
+                gridItem.setAttribute('data-num', i);
+                gridItem.setAttribute('class', 'grid-item');
+                let text = document.createTextNode(' ');
+                gridItem.appendChild(text);
+                let grid = document.getElementById('grid');
+                grid.appendChild(gridItem);
+            }
+        }
+
+        let drawSnake = () => {
+
+            // create snakesegment coord array based off snake length and 
+            snakeArray = [];
+            for (let i = 0; i < snakeLength; i++) { snakeArray.push(coordHistory[i]) }
+
+            // each loop clear classes from coordhistory beyond snake length
+            for (let i = snakeLength; i < coordHistory.length; i++) {
+                let clearSegment = document.getElementById(coordHistory[i])
+                clearSegment.classList.remove('snakeSegment')
+            }
+
+            // each loop draw classes on snake length 
+            for (let i = 0; i < snakeLength; i++) {
+                let snakeSegment = document.getElementById(snakeArray[i])
+                snakeSegment.classList.add('snakeSegment')
+            }
+
+            // each loop unshift new coord to history-array based off current key-bound direction
+            if (currentDirection != undefined) {
+                let currentCoord = coordHistory[0];
+                if (currentDirection === 'up') {transformCoord(coordHistory[0], 0, -1)}
+                else if (currentDirection === 'right') {transformCoord(coordHistory[0], 1, 0);}
+                else if (currentDirection === 'down') {transformCoord(coordHistory[0], 0, 1)}
+                else if (currentDirection === 'left') {transformCoord(coordHistory[0], -1, 0)};
+            } 
+
+            // each loop see if there are duplicate coords within snake length of coord history
+            
+            console.log(snakeArray);
+            console.log(coordHistory);
+
+        }
+
+        // function to manipulate coord string
+        let transformCoord = (coord, xAdj, yAdj) => {
+            coordArray = coord.split(',');
+            // console.log(coordArray[0])
+            // console.log(coordArray[1])
+            let new_x = Number(coordArray[0]) + Number(xAdj);
+            let new_y = Number(coordArray[1]) + Number(yAdj);
+            newCoord = new_x + ',' + new_y;
+            // console.log("new coord = " + newCoord)
+            coordHistory.unshift(newCoord);
+        }
+
+        let pointCells = [];
+        // main game logic container
+        let gameLogic = () => {
+
+            tick += 1;
+            // gameover sequence
+            let gameover = () => {
+                console.log("gameover");
+            }
+
+            // NOT WORKING
+            //check if coord is out of bounds, if so, gameover
+            let currCoord = coordHistory[0].split(",");
+            if (currCoord[0] === x && currentDirection === 'right' ||
+                currCoord[1] === y && currentDirection === 'down' ||
+                currCoord[0] === 0 && currentDirection === 'left' ||
+                currCoord[1] === 0 && currentDirection === 'up' ) {
+                    gameover();
+            }
+
+            // count existing point cells
+            let pointCellTotal = 4;
+            let pointCellCount = 0;
+            for (let i = 0; i < gridVolume; i++) {
+                let query = '[data-num="' + i + '"]';
+                let item = document.querySelectorAll(query);
+                if (item[0].classList.contains("pointCell")) { pointCellCount += 1; }
+            }
+
+            // place random point blocks according to needed amount, max 4
+            let neededPointCells = pointCellTotal - pointCellCount;
+            for (let i = 0; i < neededPointCells; i++) {
+                let randSpotNum = Math.round(Math.random() * gridVolume);
+                let query = '[data-num="' + randSpotNum + '"]';
+                let pointBlock = document.querySelectorAll(query)[0];
+                pointBlock.classList.add('pointCell')
+                pointCells.push(pointBlock.id)
+            }
+
+            // check if snake head on point block, if yes add to snake length, remove point block and add new one
+            for (let i = 0; i < pointCells.length; i++) {
+                // detected snake eating point
+                if (coordHistory[0] === pointCells[i]) {
+                    // add point to snake length
+                    snakeLength += 1;
+                    // remove pointCell class (point cell array built each tick based off classes)
+                    let targetCell = document.getElementById(coordHistory[0])
+                    targetCell.classList.remove('pointCell');
+                }
+            }
+            
+            // check if snake head on same coord as other snakeSegment, or if snake head is beyond bounds, both trigger gameover sequence
+            for (let i = 0; i < snakeLength; i++) {
+                if (tick > 4) {
+                    if (currentDirection != undefined && coordHistory[0] === snakeArray[i] && tick > 3) { 
+                        gameover();
+                    }
+                }
+
+            }
+
+            drawSnake();
+
+        }
+        
+        // game looping with 0.5s ticks
+        let gameLoop = () => {
+
+            gameLogic();
+            
+            // tick delay
+            setTimeout(() => {
+                i++;
+                // console.log("tick - " + currentDirection);
+                if (game) {
+                    gameLoop();
+                }
+            }, 500)
+        }
+
+        // controller
+        let runGame = () => {
+            makeGrid(x, y);
+            gameLoop();
+        }
+
+        window.onload = runGame();
+
+    </script>
+
+  </body>
+</html>

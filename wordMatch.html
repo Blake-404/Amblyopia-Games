@@ -1,0 +1,298 @@
+<!doctype html>
+<html>
+  <head>
+    <!--https://pixijs.io/guides/basics/getting-started.html-->
+    <script src="https://pixijs.download/release/pixi.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fontfaceobserver/2.3.0/fontfaceobserver.standalone.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;400;700;900&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div id="letterMatch">
+        <div id="gameMargin">
+            <span id="indicator"></span> 
+        </div>
+        <div id="grid"></div>   
+        <div id="gameBottom">
+            <span id="rndNum">Round: <span id="RoundNum">1</span></span>
+        </div>     
+    </div>
+
+
+    <style>
+        /* @font-face { font-family: Geologica; } */
+        :root {
+            --main-red: #d03333;
+            --text-blue: #0f275d;
+            --text-red: #f0a9a9;
+            --light-gray: #ebebeb;
+            --col-amt: 10;
+            --cell-size: 50px;
+        }
+
+        * {
+            font-family: Geologica;
+        }
+
+        #letterMatch {
+            width: calc(var(--cell-size) * var(--col-amt));
+        }
+
+        #grid div {
+            grid-column: auto;
+            font-size: 25px;
+            text-align: center;
+            /* padding-top: 10px; */
+        }
+
+        #grid {
+            display: grid;
+            grid-column-gap: 3px;
+            grid-row-gap: 3px;
+            grid-template-columns: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
+            grid-template-rows: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
+        }
+
+        .grid-item.red {
+            background-color: var(--main-red);
+            color: var(--text-blue);
+        }
+        
+        .grid-item.blue {
+            background-color: var(--light-gray);
+            color: var(--text-red);
+        }
+        
+        #indicator {
+            
+        }
+
+        #gameMargin {
+            display: inline-block;
+        }
+
+        #gameBottom {
+            padding-top:5px;
+            text-align: right;
+        }
+
+        #rndNum {
+
+        }
+
+        .ind {
+            padding: 0 5px 0 5px;
+            display: inline-block;
+            font-size: 40px;
+        }
+
+        .HL {
+            background-color: #2cbf95;
+        }
+        
+    </style>
+
+    <script>
+        // key listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.code === "ArrowUp") {
+                console.log("up");
+            } else if (e.code === "ArrowDown") {
+                console.log("down");
+            } else if (e.code === "ArrowLeft") {
+                console.log("left");
+            } else if (e.code === "ArrowRight") {
+                console.log("right");
+            }
+        });
+
+
+
+        // css controlling
+        let setRootCss = (prop, val) => {
+            document.documentElement.style.setProperty(prop, val);
+        }
+        
+
+
+        /////////////////////////////////////////////////
+        //////-------- WORD BUILDING GAME ---------//////
+        /////////////////////////////////////////////////
+
+        // data 
+        let x = 8;
+        let y = 8;
+
+        let words = ["AB", "TESTB", "MEH"];
+        words = words.map( function(x) { return x.toUpperCase(); });
+
+        const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
+        const styleClass = ["red", "blue"]
+        const gridVolume = x * y;
+
+        // get random item from list
+        let randomItem = (input) => {
+            for (let i = 1; i < input.length; i++) {
+                let getRand = Math.random() * (input.length - 1);
+                let roundResult = Math.round(getRand);
+                return input[roundResult];
+            }
+        };
+
+        let handleGridClick = (elem) => {
+            console.log(elem)
+        }
+
+        // base grid
+        let makeGrid = (x, y) => {
+
+            setRootCss('--col-amt', x);
+            
+            let x_axis = 1;
+            let y_axis = 0;
+
+            for (i = 0; i < gridVolume; i++) {
+                if (i % x === 0) {
+                    x_axis = 0; 
+                    y_axis += 1
+                }
+                x_axis += 1
+                // const grid = document.createElement("div");
+                const gridItem = document.createElement('div');
+                gridItem.setAttribute('id', i);
+                gridItem.setAttribute('x', x_axis);
+                gridItem.setAttribute('y', y_axis);
+                gridItem.setAttribute('class', 'grid-item');
+                let text = document.createTextNode("#");
+                gridItem.appendChild(text);
+                let grid = document.getElementById('grid');
+                grid.appendChild(gridItem);
+
+            }
+        }
+
+        let fillGrid = (reset) => {
+
+            if (reset != undefined) {
+                let existingItems = document.getElementsByClassName("grid-item")
+                    console.log(existingItems)
+                for (let i = 0; i < existingItems.length; i++) {
+                    existingItems[i].classList.remove('red');
+                    existingItems[i].classList.remove('blue');          
+                }
+            }
+
+            if (document.getElementsByClassName('ind') != undefined) {
+                let existing = document.getElementById('indicator');
+                while(existing.firstChild) {
+                    existing.removeChild(existing.lastChild);
+                }
+            }
+
+            // go through grid and randomly add letters and red/blue styles            
+            for (let i = 0; i < gridVolume; i++) {
+                let gridItem = document.getElementById(i);
+                gridItem.innerHTML = randomItem(alphabet);
+                gridItem.classList.add(randomItem(styleClass));
+            }
+        }
+
+        let generateIndicator = (currentword) => {
+            if (document.getElementsByClassName('ind') != undefined) {
+                let existing = document.getElementById('indicator');
+                while(existing.firstChild) {
+                    existing.removeChild(existing.lastChild);
+                }
+            }
+            for (let i = 0; i < currentword.length; i++) {
+                const indicatorSection = document.createElement('div');
+                indicatorSection.setAttribute('class', 'ind')
+                let letter = document.createTextNode(currentword[i]);
+                indicatorSection.appendChild(letter)
+                let container = document.getElementById('indicator')
+                container.appendChild(indicatorSection)
+            }
+        }
+
+        let gameLogic = (x, y) => {
+
+            // status variables 
+            let currentWord = 0;
+            let roundNumber = 0;
+            let letterNumber = 0;
+
+            let updateIndicator = () => {
+                let letterCells = document.getElementsByClassName('ind');
+                for (let i = 0; i < letterNumber; i++) {
+                    letterCells[i].setAttribute('class', 'ind HL');
+                }
+            } 
+            
+            // fucntions on grid item clicked
+            let handleGridClick = (item) => {
+                console.log(item.innerHTML);
+                checkMatch(item.innerHTML);
+            }
+
+            // get grid items and put listeners
+            let gridItems = document.getElementsByClassName("grid-item")
+            for (let i = 0; i < gridItems.length; i++) {
+                gridItems[i].addEventListener("mouseup", (e) => { handleGridClick(gridItems[i]) });
+            }
+
+            // function to place word on board based off round number
+            let placeWord = (iter) => {
+                for (let i = 0; i < words[iter].length; i++) {
+                    let randomGridID = Math.round(Math.random()*gridVolume);
+                    let randomGridElem = document.getElementById(randomGridID)
+                    randomGridElem.innerHTML = words[iter][i]
+                }
+            }
+
+            // word and round progress handler
+            let checkMatch = (letter) => {
+                if (letter === words[currentWord][letterNumber]) {
+                    letterNumber += 1;
+                    updateIndicator();
+                }
+                if (letterNumber >= words[currentWord].length) {
+                    setTimeout(newRound, 1000)
+                }
+            }
+
+            // new round handle
+            let newRound = (round) => {
+
+                if (round === 'first') { 
+                    roundNumber += 0; 
+                    currentWord += 0; 
+                    fillGrid(); };
+
+                if (round === undefined) { 
+                    roundNumber += 1; 
+                    currentWord += 1; 
+                    letterNumber = 0;
+                    fillGrid('reset'); };
+
+                placeWord(currentWord);
+                generateIndicator(words[currentWord]);
+            }
+
+            newRound('first');
+        }
+
+        // controller
+        let runGame = () => {
+            makeGrid(x, y);
+            gameLogic(x, y);
+        }
+
+        window.onload = runGame();
+
+    </script>
+
+  </body>
+</html>
