@@ -138,12 +138,6 @@
         /////////////////////////////////////////////////
 
 
-        let applyCss = () => {
-            // border
-
-        }
-
-
         // base grid formation
         let makeGrid = (x, y) => {
 
@@ -245,6 +239,7 @@
                 // let gameOverScreen = document.getElementById('gameover')
                 // gameOverScreen.classList.add('visible');
                 gameStatus = false;
+                updateData();
             }
 
             //check if coord is out of bounds, if so, gameover

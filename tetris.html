@@ -42,12 +42,12 @@
         }
 
         /////////////////////////////////////////////////
-        //////-------------- SNAKE ----------------//////
+        //////-------------- TETRIS ---------------//////
         /////////////////////////////////////////////////
 
         // data 
-        let x = 30;
-        let y = 30;
+        let x = 15;
+        let y = 25;
         const gridVolume = x * y;
 
         // base grid
@@ -76,13 +76,31 @@
         }
 
         let gameLogic = () => {
+            //start of turn
+            // shape generates, check if its intersection with existing, if so, game over
+            // each tick moves shape downward, verifying blocks beneath are clear
+                // if blocks arent clear
+                    // freeze piece, evaluate position
+                        // make any adjustments to board based off of new piece position (clearing lines, moving all pieces downward)
+        }
 
+        // game looping with 0.5s ticks
+        let gameLoop = () => {
+            gameLogic();
+            // tick delay
+            setTimeout(() => {
+                i++;
+                // console.log("tick - " + currentDirection);
+                if (gameStatus) {
+                    gameLoop();
+                }
+            }, 400)
         }
 
         // controller
         let runGame = () => {
-            makeGrid(x, y);
-            gameLogic();
+            makeGrid(x, y); 
+            gameLoop();
         }
 
         window.onload = runGame();
