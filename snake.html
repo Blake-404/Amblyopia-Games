@@ -9,6 +9,9 @@
   <body>
 
     <div id="snake">
+        <div id="gameover">gameover
+            <div>restart</div>
+        </div>
         <div id="gameMarginTop"></div>
         <div id="grid"></div>   
         <div id="gameMarginBottom"></div>     
@@ -47,8 +50,8 @@
 
         #grid {
             display: grid;
-            grid-column-gap: 3px;
-            grid-row-gap: 3px;
+            grid-column-gap: 1px;
+            grid-row-gap: 1px;
             grid-template-columns: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
             grid-template-rows: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
         }
@@ -59,6 +62,15 @@
         .pointCell {
             background-color: var(--text-blue);
         }
+
+        .outOfBoundsCell {
+            background-color: rgb(230, 230, 231);
+        }
+
+        .regularCell {
+            background-color: ;
+        }
+
     </style>
 
     <script> 
@@ -68,7 +80,7 @@
         let x = 30;
         let y = 30;
         const gridVolume = x * y;
-        let game = true;
+        let gameStatus = true;
         let currentDirection = undefined;
         let snakeLength = 5
         let snakeArray = [];
@@ -100,6 +112,13 @@
         //////-------------- SNAKE ----------------//////
         /////////////////////////////////////////////////
 
+
+        let applyCss = () => {
+            // border
+
+        }
+
+
         // base grid formation
         let makeGrid = (x, y) => {
 
@@ -124,6 +143,12 @@
                 gridItem.appendChild(text);
                 let grid = document.getElementById('grid');
                 grid.appendChild(gridItem);
+
+                if (x_axis === 1 || x_axis === x || y_axis === 1 || y_axis === y) {
+                    gridItem.classList.add('outOfBoundsCell');
+                } 
+
+
             }
         }
 
@@ -174,67 +199,100 @@
         }
 
         let pointCells = [];
+        let openCells = [];
         // main game logic container
         let gameLogic = () => {
 
-            tick += 1;
             // gameover sequence
             let gameover = () => {
                 console.log("gameover");
+                gameStatus = false;
             }
 
-            // NOT WORKING
             //check if coord is out of bounds, if so, gameover
             let currCoord = coordHistory[0].split(",");
-            if (currCoord[0] === x && currentDirection === 'right' ||
-                currCoord[1] === y && currentDirection === 'down' ||
-                currCoord[0] === 0 && currentDirection === 'left' ||
-                currCoord[1] === 0 && currentDirection === 'up' ) {
+            console.log("snake head: " + currCoord);
+            if (Number(currCoord[0]) === x && currentDirection === 'right' ||
+                Number(currCoord[1]) === y && currentDirection === 'down' ||
+                Number(currCoord[0]) === 1 && currentDirection === 'left' ||
+                Number(currCoord[1]) === 1 && currentDirection === 'up' ) {
                     gameover();
             }
 
-            // count existing point cells
-            let pointCellTotal = 4;
-            let pointCellCount = 0;
-            for (let i = 0; i < gridVolume; i++) {
-                let query = '[data-num="' + i + '"]';
-                let item = document.querySelectorAll(query);
-                if (item[0].classList.contains("pointCell")) { pointCellCount += 1; }
-            }
-
-            // place random point blocks according to needed amount, max 4
-            let neededPointCells = pointCellTotal - pointCellCount;
-            for (let i = 0; i < neededPointCells; i++) {
-                let randSpotNum = Math.round(Math.random() * gridVolume);
-                let query = '[data-num="' + randSpotNum + '"]';
-                let pointBlock = document.querySelectorAll(query)[0];
-                pointBlock.classList.add('pointCell')
-                pointCells.push(pointBlock.id)
-            }
-
-            // check if snake head on point block, if yes add to snake length, remove point block and add new one
-            for (let i = 0; i < pointCells.length; i++) {
-                // detected snake eating point
-                if (coordHistory[0] === pointCells[i]) {
-                    // add point to snake length
-                    snakeLength += 1;
-                    // remove pointCell class (point cell array built each tick based off classes)
-                    let targetCell = document.getElementById(coordHistory[0])
-                    targetCell.classList.remove('pointCell');
+            // only continue if gameStatus check above returns true
+            if (gameStatus === true) {
+                // count existing point cells
+                let pointCellTotal = 4;
+                let pointCellCount = 0;
+                for (let i = 0; i < gridVolume; i++) {
+                    let query = '[data-num="' + i + '"]';
+                    let item = document.querySelectorAll(query);
+                    if (item[0].classList.contains("pointCell")) { pointCellCount += 1; }
                 }
-            }
-            
-            // check if snake head on same coord as other snakeSegment, or if snake head is beyond bounds, both trigger gameover sequence
-            for (let i = 0; i < snakeLength; i++) {
-                if (tick > 4) {
-                    if (currentDirection != undefined && coordHistory[0] === snakeArray[i] && tick > 3) { 
-                        gameover();
+
+                // place random point blocks according to needed amount, max 4
+                // do not place point blocks on coords on snake array or has class .outOfBoundsCell
+                let neededPointCells = pointCellTotal - pointCellCount;
+                for (let i = 0; i < neededPointCells; i++) {
+
+                    // add values to existing openCells array
+                    let findOpenCells = () => {
+                        for (let i = 0; i < gridVolume; i++) {
+                            let query = '[data-num="' + i + '"]';
+                            let pointBlock = document.querySelectorAll(query)[0];
+                            if (pointBlock.classList.contains('snakeSegment') || pointBlock.classList.contains('outOfBoundsCell')) {
+                                continue;
+                            } else {
+                                openCells.push(pointBlock.id)
+                            }
+                        }
+                    }
+
+                    findOpenCells();
+
+                    // find random cell in open cells array
+                    let findRandomCell = () => {
+                        let randomArrayIndex = Math.round(Math.random() * openCells.length);
+                        let pointBlock = document.getElementById(openCells[randomArrayIndex]);
+                        return pointBlock
+                    }
+
+                    let randomCell = findRandomCell();
+
+                    // place pointCell on found random cell
+                    randomCell.classList.add('pointCell')
+                    pointCells.push(randomCell.id)
+
+                }
+
+                // check if snake head on point block, if yes add to snake length, remove point block and add new one
+                for (let i = 0; i < pointCells.length; i++) {
+                    // detected snake eating point
+                    if (coordHistory[0] === pointCells[i]) {
+                        // add point to snake length
+                        snakeLength += 1;
+                        // remove pointCell class (point cell array built each tick based off classes)
+                        let targetCell = document.getElementById(coordHistory[0])
+                        targetCell.classList.remove('pointCell');
                     }
                 }
+                
+                // check if snake head on same coord as other snakeSegment, or if snake head is beyond bounds, both trigger gameover sequence
+                for (let i = 0; i < snakeLength; i++) {
+                    if (gameStatus) {
+                        if (currentDirection != undefined && coordHistory[0] === snakeArray[i] && tick > 3) { 
+                            if (i != 0) {
+                                gameover();
+                            }
+                        }
+                    }
 
+                }
+
+                drawSnake();
+
+                tick += 1;
             }
-
-            drawSnake();
 
         }
         
@@ -247,10 +305,10 @@
             setTimeout(() => {
                 i++;
                 // console.log("tick - " + currentDirection);
-                if (game) {
+                if (gameStatus) {
                     gameLoop();
                 }
-            }, 500)
+            }, 400)
         }
 
         // controller
