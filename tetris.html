@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;400;700;900&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div id="snake">
+        <div id="gameMarginTop"></div>
+        <div id="grid"></div>   
+        <div id="gameMarginBottom"></div>     
+    </div>
+
+
+    <style>
+
+    </style>
+
+    <script>
+        // key listeners
+
+        let currentDirection = undefined;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === "ArrowUp") {
+                currentDirection = "up";
+            } else if (e.code === "ArrowDown") {
+                currentDirection = "down";
+            } else if (e.code === "ArrowLeft") {
+                currentDirection = "left";
+            } else if (e.code === "ArrowRight") {
+                currentDirection = "right";
+            }
+        });
+
+        // css controlling
+        let setRootCss = (prop, val) => {
+            document.documentElement.style.setProperty(prop, val);
+        }
+
+        /////////////////////////////////////////////////
+        //////-------------- SNAKE ----------------//////
+        /////////////////////////////////////////////////
+
+        // data 
+        let x = 30;
+        let y = 30;
+        const gridVolume = x * y;
+
+        // base grid
+        let makeGrid = (x, y) => {
+
+            setRootCss('--col-amt', x);
+            let x_axis = 1;
+            let y_axis = 0;
+            for (i = 0; i < gridVolume; i++) {
+                if (i % x === 0) {
+                    x_axis = 0; 
+                    y_axis += 1
+                }
+                x_axis += 1
+                // const grid = document.createElement("div");
+                const gridItem = document.createElement('div');
+                gridItem.setAttribute('id', i);
+                let coords = x_axis + "," + y_axis;
+                gridItem.setAttribute('coords', coords);
+                gridItem.setAttribute('class', 'grid-item');
+                let text = document.createTextNode('');
+                gridItem.appendChild(text);
+                let grid = document.getElementById('grid');
+                grid.appendChild(gridItem);
+            }
+        }
+
+        let gameLogic = () => {
+
+        }
+
+        // controller
+        let runGame = () => {
+            makeGrid(x, y);
+            gameLogic();
+        }
+
+        window.onload = runGame();
+
+    </script>
+
+  </body>
+</html>

@@ -9,8 +9,9 @@
   <body>
 
     <div id="snake">
-        <div id="gameover">gameover
-            <div>restart</div>
+        <div id="status">
+            Length: <span id="lengthData"></span>
+            <span id="gameOverStatus"></span>
         </div>
         <div id="gameMarginTop"></div>
         <div id="grid"></div>   
@@ -28,6 +29,24 @@
             --cell-size: 20px;
         }
 
+        #snake {
+            width: fit-content;
+        }
+
+        #status {
+            position: relative;
+            margin-bottom: 5px;
+        }
+
+        #gameOverStatus {
+            position: absolute;
+            right: 0px;
+        }
+
+        .visible {
+            display: inline-block;
+        }
+
         #grid {
             border: black 1pt solid;
             width: fit-content;
@@ -35,6 +54,7 @@
 
         * {
             font-family: Geologica;
+            font-size: 25px;
         }
 
         #letterMatch {
@@ -67,10 +87,15 @@
             background-color: rgb(230, 230, 231);
         }
 
-        .regularCell {
+        /* .regularCell {
             background-color: ;
-        }
+        } */
 
+        #gameover {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
     </style>
 
     <script> 
@@ -198,6 +223,17 @@
             coordHistory.unshift(newCoord);
         }
 
+        let updateData = () => {
+            let snek_len = document.getElementById('lengthData');
+            snek_len.innerHTML = String(snakeLength);
+
+            if (gameStatus === false) {
+                // console.log('GAME OVER BIATCH')
+                let gameOverInd = document.getElementById('gameOverStatus');
+                gameOverInd.innerHTML = "GAME OVER"
+            }
+        }
+
         let pointCells = [];
         let openCells = [];
         // main game logic container
@@ -206,6 +242,8 @@
             // gameover sequence
             let gameover = () => {
                 console.log("gameover");
+                // let gameOverScreen = document.getElementById('gameover')
+                // gameOverScreen.classList.add('visible');
                 gameStatus = false;
             }
 
@@ -218,6 +256,8 @@
                 Number(currCoord[1]) === 1 && currentDirection === 'up' ) {
                     gameover();
             }
+
+            updateData();
 
             // only continue if gameStatus check above returns true
             if (gameStatus === true) {
