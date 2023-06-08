@@ -334,19 +334,15 @@
         let removeLine = (fullLine) => {
 
             // go through placed cells and remove lines that have the same y-axis number as whats passed into the function
-
             let newPlacedArray = [];
             for (let i = 0; i < placedShapeCells.length; i++) {
                 let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
-                if (Number(coord[1]) != Number(fullLine[j])) {
-                    // console.log('no')
+                if (Number(coord[1]) != Number(fullLine) ) {
                     newPlacedArray.push(placedShapeCells[i])
                     placedShapeCells[i].classList.remove('placedCell')
                 }
             }
             
-            console.log(newPlacedArray)
-            console.log("fullLine: " + fullLine.length)
             let newPlacedArray2 = [];
             for (let i = 0; i < newPlacedArray.length; i++) {
                 let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, fullLine.length); 
@@ -357,32 +353,12 @@
             }
             placedShapeCells = newPlacedArray2;
 
-            // let newPlacedArray = [];
-            // for (let i = 0; i < placedShapeCells.length; i++) {
-            //     let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
-                
-            //     for (let j = 0; j < fullLine.length; j++) {
-            //         // console.log("does " + coord[1] + " match " + fullLines[j])
-            //         if (Number(coord[1]) != Number(fullLine[j])) {
-            //             // console.log('no')
-            //             newPlacedArray.push(placedShapeCells[i])
-            //             placedShapeCells[i].classList.remove('placedCell')
-            //         }
-            //     }
-            // }
-            // console.log(newPlacedArray)
-            // console.log("fullLine: " + fullLine.length)
-            // let newPlacedArray2 = [];
-            // for (let i = 0; i < newPlacedArray.length; i++) {
-            //     let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, fullLine.length); 
-            //     let foundNode = findQuery("[data-coords='" + newCoord + "']")
-            //     if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
-            //         newPlacedArray2.push(foundNode);
-            //     }
-            // }
-            // placedShapeCells = newPlacedArray2;
-            // refreshPlaced();
-    
+        }
+
+        let awardPoints = (level, multiplier) => {
+            let increment = 100;
+            let points = (100 * level) * multiplier;
+            console.log(points)
         }
 
         // go through placed coords and look for patterns to reward points, increase streak, remove filled lines, and move down placed cells after lines are removed
@@ -393,7 +369,8 @@
                 let coords = placedShapeCells[i].getAttribute('data-coords').split(",")
                 placedCells.push(coords)
             }
-            let fullLines = [];
+
+            let fullLines = 0;
             let cellRowCounts = {};
             // go through placedCells and add to, init value, or indicate fullline, for a given iter
             for (let i = 0; i < placedCells.length; i++) {
@@ -406,16 +383,21 @@
 
                     // WHAT TO DO UPON FULL LINE
                     console.log("line " + placedCells[i][1] + " is full! ->" + cellRowCounts[placedCells[i][1]])
-                    if( fullLines.length > 0 ) { removeLine(placedCells[i][1]); }
+                    removeLine(placedCells[i][1]);
+                    fullLines += 1;
+                    // if( fullLines.length > 0 ) { removeLine(placedCells[i][1]); }
                     // console.log("found line")
                     // fullLines.push(placedCells[i][1])
                 }
             }
+            if (fullLines.length > 0) {
+                awardPoints(1, fullLines);
+            }
+
             console.log("full lines");
+            console.log(placedCells);
             console.log(fullLines);
             console.log(cellRowCounts);
-            console.log();
-
             
         }
 
