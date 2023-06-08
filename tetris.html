@@ -172,8 +172,10 @@
             for (let i = 0; i < gridVolume; i++) {
                 let gridElem = document.getElementById(i)
                 if (gridElem.classList.contains("shapeSegment")) {
-                    gridElem.classList.remove("shapeSegment")
-                }
+                    gridElem.classList.remove("shapeSegment") }
+                if (gridElem.classList.contains("placedCell")) {
+                    gridElem.classList.remove("placedCell")
+                } 
             }
 
             // add shapeSegment class to coordinates in shape coord array
@@ -190,7 +192,7 @@
 
             //debug
             if(currentDirection === "left") {
-                console.log('drawboard done')
+                // console.log('drawboard done')
             }
         }
 
@@ -231,7 +233,7 @@
 
             // (i) go through current shape coordinates     // (j) go through all placedCells and compare coords to current shape coordinates    // if match, gameover()
             for (let i = 0; i < currShapeCoords.length; i++) {
-                console.log(currShapeCoords[i] + " compared to: ")
+                // console.log(currShapeCoords[i] + " compared to: ")
                 for (let j = 0; j < placedShapeCells.length; j++) {
                     if (currShapeCoords[i] === placedShapeCells[j].getAttribute('data-coords')) {
                         gameover();
@@ -297,7 +299,7 @@
                 }
             } 
             if (isOpen === undefined) { isOpen = false }
-            console.log("isNextDone")
+            // console.log("isNextDone")
             return isOpen
         }
 
@@ -310,92 +312,111 @@
             }
         }
 
+        // let refreshPlaced = () => {
+        //     let newPlacedArray = [];
+        //     let foundPlaced = document.getElementsByClassName('placedCell')
+        //     for (let i = 0; i < foundPlaced.length; i++) {
+        //         newPlacedArray.push(foundPlaced[i])
+        //     }
+        //     placedShapeCells = newPlacedArray
+        // }
+
         // reset shape coord array and remove current shape
         let newShape = () => {
             shapeRotation = 0;
             currShapeCoords = [];
             currentShape = undefined;
             currentRoot = startCell;
+            fullLines = [];
+            cellRowCounts = {};
         }
 
-        let removeLines = (lines) => {
+        let removeLine = (fullLine) => {
 
-            
             // go through placed cells and remove lines that have the same y-axis number as whats passed into the function
 
-
-
-
+            let newPlacedArray = [];
+            for (let i = 0; i < placedShapeCells.length; i++) {
+                let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
+                if (Number(coord[1]) != Number(fullLine[j])) {
+                    // console.log('no')
+                    newPlacedArray.push(placedShapeCells[i])
+                    placedShapeCells[i].classList.remove('placedCell')
+                }
+            }
+            
+            console.log(newPlacedArray)
+            console.log("fullLine: " + fullLine.length)
+            let newPlacedArray2 = [];
+            for (let i = 0; i < newPlacedArray.length; i++) {
+                let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, fullLine.length); 
+                let foundNode = findQuery("[data-coords='" + newCoord + "']")
+                if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
+                    newPlacedArray2.push(foundNode);
+                }
+            }
+            placedShapeCells = newPlacedArray2;
 
             // let newPlacedArray = [];
             // for (let i = 0; i < placedShapeCells.length; i++) {
-            //     for (let j = 0; j < lines.length; j++) {
-            //         if (placedShapeCells[i].getAttribute('data-coords').split(",")[1] != lines[j]) {
-            //             // let item = findQuery("[data-coords='" + placed[i][0] + "," + placed[i][1] + "']");
-            //             // item.classList.remove("placedCell");
-            //             // console.log("removing")
-            //             // console.log(item)
+            //     let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
+                
+            //     for (let j = 0; j < fullLine.length; j++) {
+            //         // console.log("does " + coord[1] + " match " + fullLines[j])
+            //         if (Number(coord[1]) != Number(fullLine[j])) {
+            //             // console.log('no')
             //             newPlacedArray.push(placedShapeCells[i])
+            //             placedShapeCells[i].classList.remove('placedCell')
             //         }
             //     }
             // }
-            // console.log("new")
             // console.log(newPlacedArray)
-
-
-
-
-
-
-
-            // remove the placed cell class from the lines to be removed
-
-            // go through placed cells, for y-axis' above the highest value in the lines array, subtract the amount of lines, redraw placed cells
-
-
-
-
-
-
+            // console.log("fullLine: " + fullLine.length)
+            // let newPlacedArray2 = [];
+            // for (let i = 0; i < newPlacedArray.length; i++) {
+            //     let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, fullLine.length); 
+            //     let foundNode = findQuery("[data-coords='" + newCoord + "']")
+            //     if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
+            //         newPlacedArray2.push(foundNode);
+            //     }
+            // }
+            // placedShapeCells = newPlacedArray2;
+            // refreshPlaced();
+    
         }
 
         // go through placed coords and look for patterns to reward points, increase streak, remove filled lines, and move down placed cells after lines are removed
         let evaluatePlaced = () => {
-            // create array of coord strings to evaluate -- from the placedShapeCells array
             let placedCells = [];
-            // let removeLines = [];
+            // go througgh placedCell dom array and pull coord attr
             for (let i = 0; i < placedShapeCells.length; i++) {
-                // split coord and count x's that are the same and add them to arrays
                 let coords = placedShapeCells[i].getAttribute('data-coords').split(",")
                 placedCells.push(coords)
             }
-            // evaluate the arrays, see how many there are that equal the board width (full line)
             let fullLines = [];
-            let cellRowCounts = { 0: 0 }
+            let cellRowCounts = {};
+            // go through placedCells and add to, init value, or indicate fullline, for a given iter
             for (let i = 0; i < placedCells.length; i++) {
-                if(cellRowCounts[placedCells[i][1]]) {
+                if(cellRowCounts[placedCells[i][1]] && cellRowCounts[placedCells[i][1]] != (x - 2)) {
                     cellRowCounts[placedCells[i][1]] += 1;
                 } else {
                     cellRowCounts[placedCells[i][1]] = 1;
                 }
                 if(cellRowCounts[placedCells[i][1]] === (x - 2)) {
-                    // if full line is found in row counts
-                    console.log("line " + placedCells[i][1] + " is full!")
+
+                    // WHAT TO DO UPON FULL LINE
+                    console.log("line " + placedCells[i][1] + " is full! ->" + cellRowCounts[placedCells[i][1]])
+                    if( fullLines.length > 0 ) { removeLine(placedCells[i][1]); }
                     // console.log("found line")
-                    // remove line from placedCells array
-                    fullLines.push(placedCells[i][1])
-                    // removeLine();
+                    // fullLines.push(placedCells[i][1])
                 }
             }
-            console.log(placedCells);
-            removeLines(placedCells, fullLines);
+            console.log("full lines");
+            console.log(fullLines);
+            console.log(cellRowCounts);
+            console.log();
 
-
-
-
-
-
-
+            
         }
 
         // code to be executed each tick
@@ -430,8 +451,8 @@
 
             gameLogic();
             // debug stuff
-            console.log("------------------------- debug")
-            console.log(placedShapeCells)
+            // console.log("------------------------- debug")
+            // console.log(placedShapeCells)
 
             // tick delay
             setTimeout(() => {
@@ -487,7 +508,8 @@
                     let newCoord = adjCoordStr(currentRoot,  
                                     shapeRotations[currentShape][currRotation][i][0],  
                                     shapeRotations[currentShape][currRotation][i][1] )
-                    if (document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('wallCell')) {
+                    if (document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('wallCell') ||
+                        document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('placedCell') ) {
                         currShapeCoords = prevShape
                         break;
                     } else {
