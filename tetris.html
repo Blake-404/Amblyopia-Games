@@ -8,15 +8,87 @@
 
   <body>
 
-    <div id="snake">
-        <div id="gameMarginTop"></div>
+    <div id="tetris">
+        <div id="status">
+            <div id="level">Level <span>1</span></div>
+            <div id="gameStatus">TEH TRIS</div>
+            <div id="points">0</div>
+        </div>
         <div id="grid"></div>   
         <div id="gameMarginBottom"></div>     
     </div>
 
 
     <style>
+        :root {
+            --main-red: #d03333;
+            --text-blue: #0f275d;
+            --text-red: #f0a9a9;
+            --light-gray: #ebebeb;
+            --col-x-amt: none;
+            --col-y-amt: none;
+            --cell-size: 20px;
+        }
 
+        #level {
+            position: absolute;
+            left: 0;
+        }
+
+        #gameStatus {
+            position: absolute;
+            right: 40%;
+        }
+
+        #points {
+            position: absolute;
+            right: 0;
+        }
+
+        #status {
+            position: relative;
+            height: 25px; 
+        }
+
+        * {
+            font-family: Geologica;
+        }
+
+        #tetris {
+            width: fit-content;
+        }
+
+        .shapeSegment {
+            background-color: red ;
+            border-color: red !important;
+        }
+
+        .placedCell {
+            background-color: var(--text-blue);
+            border-color: var(--text-blue) !important;
+        }
+
+        .grid-item {
+            border: solid 0.5px rgb(209, 209, 209);
+        }
+
+        .floorCell {
+            background-color: rgb(209, 209, 209);
+        }
+
+        .wallCell {
+            background-color: rgb(209, 209, 209);
+        }
+
+        #grid {
+            border: solid 0.5px black;
+            display: grid;
+            grid-column-gap: 0;
+            grid-row-gap: 0;
+            grid-template-columns: repeat(var(--col-x-amt), minmax(var(--cell-size), var(--cell-size)));
+            grid-template-rows: repeat(var(--col-y-amt), minmax(var(--cell-size), var(--cell-size)));
+            grid-auto-columns: 20px;
+        }
     </style>
 
     <script>
@@ -24,41 +96,38 @@
 
         let currentDirection = undefined;
 
-        document.addEventListener('keydown', (e) => {
-            if (e.code === "ArrowUp") {
-                currentDirection = "up";
-            } else if (e.code === "ArrowDown") {
-                currentDirection = "down";
-            } else if (e.code === "ArrowLeft") {
-                currentDirection = "left";
-            } else if (e.code === "ArrowRight") {
-                currentDirection = "right";
-            }
-        });
-
         // css controlling
         let setRootCss = (prop, val) => {
             document.documentElement.style.setProperty(prop, val);
+        }
+
+        // find js query 
+        let findQuery = (query) => {
+            let foundItem = document.querySelectorAll(query)[0];
+            return foundItem
         }
 
         /////////////////////////////////////////////////
         //////-------------- TETRIS ---------------//////
         /////////////////////////////////////////////////
 
-        // data 
+        // global data 
         let x = 15;
         let y = 25;
+        let gameStatus = true;
         const gridVolume = x * y;
-
-        // needed data
-            // current shape
-            let currShapeCoords = [];
-            // placed shapes
+        let startCell = "7,1";
+        let currentRoot = "7,1";
+        let currentShape = undefined;
+        let currShapeCoords = [];
+        let placedShapeCells = [];        
+        let directions = { "left": [-1, 0], "down": [0, +1], "right": [+1, 0] }
 
         // base grid
         let makeGrid = (x, y) => {
 
-            setRootCss('--col-amt', x);
+            setRootCss('--col-x-amt', x);
+            setRootCss('--col-y-amt', y);
             let x_axis = 1;
             let y_axis = 0;
             for (i = 0; i < gridVolume; i++) {
@@ -71,81 +140,396 @@
                 const gridItem = document.createElement('div');
                 gridItem.setAttribute('id', i);
                 let coords = x_axis + "," + y_axis;
-                gridItem.setAttribute('coords', coords);
+                gridItem.setAttribute('data-coords', coords);
                 gridItem.setAttribute('class', 'grid-item');
                 let text = document.createTextNode('');
                 gridItem.appendChild(text);
                 let grid = document.getElementById('grid');
                 grid.appendChild(gridItem);
+
+                if (y_axis === y) {
+                    gridItem.classList.add('floorCell');
+                } 
+                if (x_axis === 1 || x_axis === x) {
+                    gridItem.classList.add('wallCell');
+                }
             }
         }
 
-        let generateShape = (shape, rootCoord) => {
+        // create function to split rootCoord string, add/subtract values to x or y, return new coordString, push to current shape array
+        let adjCoordStr = (coord, x, y) => {
+            let coordArray = coord.split(",");
+            let xCoord = Number(coordArray[0]);
+            let yCoord = Number(coordArray[1]);
+            xCoord += x; yCoord += y;
+            let newCoord = String(xCoord + ',' + yCoord)
+            return newCoord
+        }
 
-            let shape = undefined;
-            if (shape === "random") {
-                
+        // draw/update board, remove old shape segments, add new shape segments, draw placedShapes coords onto board
+        let drawBoard = () => {
+            // search for and remove shape segments
+            for (let i = 0; i < gridVolume; i++) {
+                let gridElem = document.getElementById(i)
+                if (gridElem.classList.contains("shapeSegment")) {
+                    gridElem.classList.remove("shapeSegment")
+                }
             }
-            let shapes = ["rhombus", "tee", "square", "line", "angle"];
-            shape = shapes[Math.round(Math.random() * 5)]
 
-            // create function to split rootCoord string, add/subtract values to x or y, return new coordString, push to current shape array
-            let adjCoordStr = (coord, x, y) => {
-                let coordArray = coord.split(",");
-                let xCoord = Number(coordArray[0]);
-                let yCoord = Number(coordArray[1]);
-                xCoord += x;
-                yCoord += y;
+            // add shapeSegment class to coordinates in shape coord array
+            for (let i = 0; i < currShapeCoords.length; i++) {
+                let shapeCell = findQuery('[data-coords="' + currShapeCoords[i] + '"]')
+                shapeCell.classList.add('shapeSegment') 
             }
 
+            // draw placedShapes onto board
+            for (let i = 0; i < placedShapeCells.length; i++) {
+                placedShapeCells[i].classList.add('placedCell')
+            }
+
+
+            //debug
+            if(currentDirection === "left") {
+                console.log('drawboard done')
+            }
+        }
+
+        // execute game over
+        let gameover = () => {
+            gameStatus = false;
+            document.getElementById('gameStatus').innerHTML = 'GAMEOVER'
+        }
+
+        // generate shape from a root coordinate, if shape is not specified, shape with be random
+        let generateShape = (rootCoord, shape = undefined) => {
+
+            // get shape 
+            let shapeName  = '';
+            let shapes = ["rhombus", "tee", "square", "line", "angle",
+                          "rhombus", "tee", "square","angle",
+                          "rhombus", "tee", "square", "angle",];
+            if (shape === "random") { shapeName = shapes[Math.round(Math.random() * 5)] }
+
+            // shape coordinates
             let shapeDefintions = {
-                "rhombus": [[0, +1], [0, +2], [+1, +2], [+1, +3]],
-                "tee" : [[0, +1], [0, +2], [+1, +2], [0, +3]],         
-                "square" : [[0, +1], [+1, +1], [+1, +2], [+2, +2]],
-                "line" : [[0, +1], [0, +2], [0, +3], [0, +4]],
-                "angle" : [[0, +1], [0, +2], [0, +3], [+1, +3]]
+                "rhombus":  [[0, +1], [0, +2], [+1, +2], [+1, +3]], 
+                "tee" :     [[0, +1], [0, +2], [+1, +2], [0, +3]],         
+                "square" :  [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                "line" :    [[0, +1], [0, +2], [0, +3], [0, +4]],
+                "angle" :   [[0, +1], [0, +2], [0, +3], [+1, +3]]
             } 
 
-            if (shape === "rhombus") {  for (let i = 0; i < 4; i++)  {  adjCoordStr(rootCoord, shapeDefintions["rhombus"][i][0], shapeDefintions["rhombus"][i][1])  }  } 
-            if (shape === "tee") {  for (let i = 0; i < 4; i++) {  adjCoordStr(rootCoord, shapeDefintions["tee"][i][0], shapeDefintions["tee"][i][1])  }  }
-            if (shape === "square") {  for (let i = 0; i < 4; i++) {  adjCoordStr(rootCoord, shapeDefintions["square"][i][0], shapeDefintions["square"][i][1])  }  }
-            if (shape === "line") { for (let i = 0; i < 4; i++) {  adjCoordStr(rootCoord, shapeDefintions["line"][i][0], shapeDefintions["line"][i][1]) } }
-            if (shape === "angle") { for (let i = 0; i < 4; i++) {  adjCoordStr(rootCoord, shapeDefintions["angle"][i][0], shapeDefintions["angle"][i][1]) } }
+            // draw shape coords to array based off shapeName
+            if (currentShape === undefined) { 
+                if (shapeName === "rhombus") {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["rhombus"][i][0],  shapeDefintions["rhombus"][i][1])  )  }  } 
+                if (shapeName === "tee") {      for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["tee"][i][0],      shapeDefintions["tee"][i][1])      )  }  }
+                if (shapeName === "square") {   for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["square"][i][0],   shapeDefintions["square"][i][1])   )  }  }
+                if (shapeName === "line") {     for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["line"][i][0],     shapeDefintions["line"][i][1])     )  }  }
+                if (shapeName === "angle") {    for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["angle"][i][0],    shapeDefintions["angle"][i][1])    )  }  }     
+                currentShape = shapeName;   
+            }
 
-            console.log("generated shape")
+            // (i) go through current shape coordinates     // (j) go through all placedCells and compare coords to current shape coordinates    // if match, gameover()
+            for (let i = 0; i < currShapeCoords.length; i++) {
+                console.log(currShapeCoords[i] + " compared to: ")
+                for (let j = 0; j < placedShapeCells.length; j++) {
+                    if (currShapeCoords[i] === placedShapeCells[j].getAttribute('data-coords')) {
+                        gameover();
+                    }
+                }
+            }
         }
 
+        // move shape based off direction array 
+        let moveShape = (dir) => {
+            for (let i = 0; i < currShapeCoords.length; i++) {
+                let newCoord = adjCoordStr(currShapeCoords[i], directions[dir][0], directions[dir][1]);
+                currShapeCoords[i] = newCoord;
+            }
+            let newRoot = '';
+            if (dir === "down") {
+                newRoot = adjCoordStr(currentRoot, 0, +1)
+            } else if (dir === "left") {
+                newRoot = adjCoordStr(currentRoot, -1, 0)
+            } else if (dir === "right") {
+                newRoot = adjCoordStr(currentRoot, +1, 0)
+            }
+            currentRoot = newRoot;
+        }
+
+        // check to see if the next cells are open
+        let isNextOpen = (dir) => {
+            // find coords to check
+            let coordsToCheck = [];
+            let isOpen;
+            for (let i = 0; i < currShapeCoords.length; i++) {
+                let newCoord = adjCoordStr(currShapeCoords[i], directions[dir][0],  directions[dir][1]);
+                let shapeCell = findQuery('[data-coords="' + newCoord + '"]');
+                if (shapeCell != undefined && shapeCell.classList.contains("shapeSegment") === false) {
+                    coordsToCheck.push(shapeCell);
+                }
+            }
+            // check coords in coordsToCheck for an existing cell or out of bounds
+            for (let i = 0; i < coordsToCheck.length; i++) {
+                // get its data coords attr and split to array
+                let coords = coordsToCheck[i].getAttribute("data-coords").split(",");    
+                if (dir === 'down') {
+                    // check y coord to see if it is on floor level 
+                    if (Number(coords[1]) === y) { 
+                        isOpen = false
+                        break;
+                    // check y coord to see if there is a placedCell 
+                    } else if ((coordsToCheck[i].classList.contains("placedCell"))) {
+                        isOpen = false
+                        break;
+                    } else if (coords[1] < y) {
+                        isOpen = true
+                    }
+                } else if (dir === 'left' || dir === 'right') {
+                    isOpen = true
+                    if (coordsToCheck[i].classList.contains("wallCell")) {
+                        isOpen = false
+                        break;
+                    } else if (coordsToCheck[i].classList.contains("placedCell")) { 
+                        isOpen = false
+                        break;     
+                    }
+                }
+            } 
+            if (isOpen === undefined) { isOpen = false }
+            console.log("isNextDone")
+            return isOpen
+        }
+
+        // after a shape lands, add its coordinates to placedShapes array
+        let updatePlaced = () => {
+            for (let i = 0; i < currShapeCoords.length; i++) {
+                // console.log("test: " + currShapeCoords[i])
+                let shapeCell = findQuery('[data-coords="' + currShapeCoords[i] + '"]')
+                placedShapeCells.push(shapeCell);
+            }
+        }
+
+        // reset shape coord array and remove current shape
+        let newShape = () => {
+            shapeRotation = 0;
+            currShapeCoords = [];
+            currentShape = undefined;
+            currentRoot = startCell;
+        }
+
+        let removeLines = (lines) => {
+
+            
+            // go through placed cells and remove lines that have the same y-axis number as whats passed into the function
+
+
+
+
+
+            // let newPlacedArray = [];
+            // for (let i = 0; i < placedShapeCells.length; i++) {
+            //     for (let j = 0; j < lines.length; j++) {
+            //         if (placedShapeCells[i].getAttribute('data-coords').split(",")[1] != lines[j]) {
+            //             // let item = findQuery("[data-coords='" + placed[i][0] + "," + placed[i][1] + "']");
+            //             // item.classList.remove("placedCell");
+            //             // console.log("removing")
+            //             // console.log(item)
+            //             newPlacedArray.push(placedShapeCells[i])
+            //         }
+            //     }
+            // }
+            // console.log("new")
+            // console.log(newPlacedArray)
+
+
+
+
+
+
+
+            // remove the placed cell class from the lines to be removed
+
+            // go through placed cells, for y-axis' above the highest value in the lines array, subtract the amount of lines, redraw placed cells
+
+
+
+
+
+
+        }
+
+        // go through placed coords and look for patterns to reward points, increase streak, remove filled lines, and move down placed cells after lines are removed
+        let evaluatePlaced = () => {
+            // create array of coord strings to evaluate -- from the placedShapeCells array
+            let placedCells = [];
+            // let removeLines = [];
+            for (let i = 0; i < placedShapeCells.length; i++) {
+                // split coord and count x's that are the same and add them to arrays
+                let coords = placedShapeCells[i].getAttribute('data-coords').split(",")
+                placedCells.push(coords)
+            }
+            // evaluate the arrays, see how many there are that equal the board width (full line)
+            let fullLines = [];
+            let cellRowCounts = { 0: 0 }
+            for (let i = 0; i < placedCells.length; i++) {
+                if(cellRowCounts[placedCells[i][1]]) {
+                    cellRowCounts[placedCells[i][1]] += 1;
+                } else {
+                    cellRowCounts[placedCells[i][1]] = 1;
+                }
+                if(cellRowCounts[placedCells[i][1]] === (x - 2)) {
+                    // if full line is found in row counts
+                    console.log("line " + placedCells[i][1] + " is full!")
+                    // console.log("found line")
+                    // remove line from placedCells array
+                    fullLines.push(placedCells[i][1])
+                    // removeLine();
+                }
+            }
+            console.log(placedCells);
+            removeLines(placedCells, fullLines);
+
+
+
+
+
+
+
+        }
+
+        // code to be executed each tick
+        let eachTick = () => {
+            // depending on if current shape can move or not
+            // move currentShape coords downward one
+            if (isNextOpen('down')) {
+                moveShape("down");
+            } else {
+                updatePlaced();
+                evaluatePlaced();
+                newShape();
+            }
+        }
+
+        // execute logic based off state of game 
         let gameLogic = () => {
             //start of turn
             // shape generates, check if its intersection with existing, if so, game over
-
-            // each tick moves shape downward, verifying blocks beneath are clear
-                // if blocks arent clear
-                    // freeze piece, evaluate position
-                        // make any adjustments to board based off of new piece position (clearing lines, moving all pieces downward)
-
-            let eachTick = () => {
-
+            if (currentShape === undefined)  {
+                generateShape(startCell, "random");
+            } else if (currentShape != undefined && gameStatus != false) {
+                eachTick();
+                drawBoard();
+            } else if (gameStatus === false) {
+                // gameover code
             }
-
         }
 
         // game looping with 0.5s ticks
         let gameLoop = () => {
+
             gameLogic();
+            // debug stuff
+            console.log("------------------------- debug")
+            console.log(placedShapeCells)
+
             // tick delay
             setTimeout(() => {
                 i++;
-                // console.log("tick - " + currentDirection);
                 if (gameStatus) {
                     gameLoop();
                 }
-            }, 400)
+            }, 500)
         }
 
-        // controller
+        let shapeRotations = {
+            "rhombus":  {
+                0:   [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
+                90:  [[-1, +2], [0, +1], [0, +2],  [+1, +1]],
+                180: [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
+                270: [[-1, +2], [0, +1], [0, +2],  [+1, +1]]
+            },
+            "tee" :  {
+                0:   [[0, +1],  [0, +2],  [+1, +2], [0, +3]], 
+                90:  [[-1, +2], [0, +2],  [+1, +2], [0, +3]], 
+                180: [[0, +1],  [0, +2],  [-1, +2], [0, +3]], 
+                270: [[0, +1],  [-1, +2], [0, +2],  [+1, +2]]
+            },     
+            "square" :  {
+                0:   [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                90:  [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                180: [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                270: [[0, +1], [0, +2], [+1, +1], [+1, +2]]
+            },
+            "line" :  {
+                0:   [[0, +1], [0, +2], [0, +3], [0, +4]], 
+                90:  [[-2, +2], [-1, +2], [0, +2], [+1, +2]],
+                180: [[0, +1], [0, +2], [0, +3], [0, +4]], 
+                270: [[-1, +2], [0, +2], [+1, +2], [+2, +2]]
+            },
+             "angle" :  {
+                0:   [[0, +1], [0, +2], [0, +3], [+1, +3]],
+                90:  [[-1, +3], [-1, +2], [0, +2], [+1, +2]],
+                180: [[-1, +1], [0, +1], [0, +2], [0, +3]], 
+                270: [[-1, +2], [0, +2], [+1, +2], [+1, +1]]
+             }
+        }
+
+        let currRotation = 0;
+        
+        // rotate piece 90 degrees based off shape rotations object, checks to see if would intersect wall and canceles if so
+        let rotate = () => {
+            if (currentShape != undefined) {
+                currRotation = (currRotation += 90) % 360;
+                let prevShape = currShapeCoords;
+                currShapeCoords = [];
+                for (let i = 0; i < 4; i++) {  
+                    let newCoord = adjCoordStr(currentRoot,  
+                                    shapeRotations[currentShape][currRotation][i][0],  
+                                    shapeRotations[currentShape][currRotation][i][1] )
+                    if (document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('wallCell')) {
+                        currShapeCoords = prevShape
+                        break;
+                    } else {
+                        currShapeCoords.push( newCoord );
+                    }
+                }
+                drawBoard();   
+            }
+        }
+
+        // initialize user input controls
+        let initUser = () => {
+            document.addEventListener('keydown', (e) => {
+
+                if (e.code === "ArrowDown") { 
+                    currentDirection = "down";
+                    gameLogic(); 
+                } 
+
+                else if (e.code === "ArrowLeft") { 
+                    currentDirection = "left";
+                    if (isNextOpen("left")) { moveShape("left") }
+                    drawBoard();  
+                }
+
+                else if (e.code === "ArrowRight") { 
+                    currentDirection = "right";
+                    if (isNextOpen("right")) {  moveShape("right") }
+                    drawBoard(); 
+                }
+
+                else if (e.code === "ArrowUp") {
+                    rotate();
+                }
+
+            });
+        }
+
+        // initiliaze game
         let runGame = () => {
             makeGrid(x, y); 
+            initUser();
             gameLoop();
         }
 
