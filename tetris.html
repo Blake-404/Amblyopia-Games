@@ -10,7 +10,7 @@
 
     <div id="tetris">
         <div id="status">
-            <div id="level">Level <span>1</span></div>
+            <div id="lvl">Level <span id="level">1</span></div>
             <div id="gameStatus">TEH TRIS</div>
             <div id="points">0</div>
         </div>
@@ -30,20 +30,13 @@
             --cell-size: 20px;
         }
 
-        #level {
-            position: absolute;
-            left: 0;
-        }
+        #lvl { left: 0; }
 
-        #gameStatus {
-            position: absolute;
-            right: 40%;
-        }
+        #gameStatus { right: 30%; }
 
-        #points {
-            position: absolute;
-            right: 0;
-        }
+        #points { right: 0; }
+
+        #status > div { position: absolute; }
 
         #status {
             position: relative;
@@ -111,17 +104,59 @@
         //////-------------- TETRIS ---------------//////
         /////////////////////////////////////////////////
 
-        // global data 
-        let x = 15;
-        let y = 25;
-        let gameStatus = true;
+        // grid variables
+        let x = 12;
+        let y = 21;
         const gridVolume = x * y;
-        let startCell = "7,1";
-        let currentRoot = "7,1";
+
+        // status variables
+        let gameStatus = true;
+        let linesCleared = 0;
+        let pointCount = 0;
+        let currentLevel = 1;
+
+        // shape variables
+        let startCell = (Math.round((x - 1) / 2)) + ",1"
+        let currentRoot = startCell;
         let currentShape = undefined;
         let currShapeCoords = [];
         let placedShapeCells = [];        
         let directions = { "left": [-1, 0], "down": [0, +1], "right": [+1, 0] }
+
+        let currRotation = 0;
+        let shapeRotations = {
+            "z_block":  {
+                0:   [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
+                90:  [[-1, +2], [0, +1], [0, +2],  [+1, +1]],
+                180: [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
+                270: [[-1, +2], [0, +1], [0, +2],  [+1, +1]]
+            },
+            "t_block" :  {
+                0:   [[0, +1],  [0, +2],  [+1, +2], [0, +3]], 
+                90:  [[-1, +2], [0, +2],  [+1, +2], [0, +3]], 
+                180: [[0, +1],  [0, +2],  [-1, +2], [0, +3]], 
+                270: [[0, +1],  [-1, +2], [0, +2],  [+1, +2]]
+            },     
+            "block" :  {
+                0:   [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                90:  [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                180: [[0, +1], [0, +2], [+1, +1], [+1, +2]],
+                270: [[0, +1], [0, +2], [+1, +1], [+1, +2]]
+            },
+            "line" :  {
+                0:   [[0, +1], [0, +2], [0, +3], [0, +4]], 
+                90:  [[-2, +2], [-1, +2], [0, +2], [+1, +2]],
+                180: [[0, +1], [0, +2], [0, +3], [0, +4]], 
+                270: [[-1, +2], [0, +2], [+1, +2], [+2, +2]]
+            },
+             "l_block" :  {
+                0:   [[0, +1], [0, +2], [0, +3], [+1, +3]],
+                90:  [[-1, +3], [-1, +2], [0, +2], [+1, +2]],
+                180: [[-1, +1], [0, +1], [0, +2], [0, +3]], 
+                270: [[-1, +2], [0, +2], [+1, +2], [+1, +1]]
+             }
+        }
+
 
         // base grid
         let makeGrid = (x, y) => {
@@ -207,27 +242,19 @@
 
             // get shape 
             let shapeName  = '';
-            let shapes = ["rhombus", "tee", "square", "line", "angle",
-                          "rhombus", "tee", "square","angle",
-                          "rhombus", "tee", "square", "angle",];
+            let shapes = ["z_block", "t_block", "block", "line", "l_block",
+                          "z_block", "t_block", "block","l_block",
+                          "z_block", "t_block", "block", "l_block",];
             if (shape === "random") { shapeName = shapes[Math.round(Math.random() * 5)] }
 
-            // shape coordinates
-            let shapeDefintions = {
-                "rhombus":  [[0, +1], [0, +2], [+1, +2], [+1, +3]], 
-                "tee" :     [[0, +1], [0, +2], [+1, +2], [0, +3]],         
-                "square" :  [[0, +1], [0, +2], [+1, +1], [+1, +2]],
-                "line" :    [[0, +1], [0, +2], [0, +3], [0, +4]],
-                "angle" :   [[0, +1], [0, +2], [0, +3], [+1, +3]]
-            } 
-
             // draw shape coords to array based off shapeName
+
             if (currentShape === undefined) { 
-                if (shapeName === "rhombus") {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["rhombus"][i][0],  shapeDefintions["rhombus"][i][1])  )  }  } 
-                if (shapeName === "tee") {      for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["tee"][i][0],      shapeDefintions["tee"][i][1])      )  }  }
-                if (shapeName === "square") {   for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["square"][i][0],   shapeDefintions["square"][i][1])   )  }  }
-                if (shapeName === "line") {     for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["line"][i][0],     shapeDefintions["line"][i][1])     )  }  }
-                if (shapeName === "angle") {    for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeDefintions["angle"][i][0],    shapeDefintions["angle"][i][1])    )  }  }     
+                if (shapeName === "z_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["z_block"][0][i][0],  shapeRotations["z_block"][0][i][1])   )  }  } 
+                if (shapeName === "t_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["t_block"][0][i][0],  shapeRotations["t_block"][0][i][1])   )  }  }
+                if (shapeName === "block")    {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["block"][0][i][0],    shapeRotations["block"][0][i][1])     )  }  }
+                if (shapeName === "line")     {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["line"][0][i][0],     shapeRotations["line"][0][i][1])      )  }  }
+                if (shapeName === "l_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["l_block"][0][i][0],  shapeRotations["l_block"][0][i][1])   )  }  }     
                 currentShape = shapeName;   
             }
 
@@ -312,15 +339,6 @@
             }
         }
 
-        // let refreshPlaced = () => {
-        //     let newPlacedArray = [];
-        //     let foundPlaced = document.getElementsByClassName('placedCell')
-        //     for (let i = 0; i < foundPlaced.length; i++) {
-        //         newPlacedArray.push(foundPlaced[i])
-        //     }
-        //     placedShapeCells = newPlacedArray
-        // }
-
         // reset shape coord array and remove current shape
         let newShape = () => {
             shapeRotation = 0;
@@ -331,34 +349,82 @@
             cellRowCounts = {};
         }
 
-        let removeLine = (fullLine) => {
+        let removeLine = (fullLineID) => {
 
             // go through placed cells and remove lines that have the same y-axis number as whats passed into the function
             let newPlacedArray = [];
             for (let i = 0; i < placedShapeCells.length; i++) {
+                // newPlacedArray.push(placedShapeCells[i])
                 let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
-                if (Number(coord[1]) != Number(fullLine) ) {
+                if (Number(coord[1]) != Number(fullLineID) ) {
                     newPlacedArray.push(placedShapeCells[i])
                     placedShapeCells[i].classList.remove('placedCell')
                 }
             }
             
+// NEED TO: make cells drop correctly after line clear
             let newPlacedArray2 = [];
-            for (let i = 0; i < newPlacedArray.length; i++) {
-                let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, fullLine.length); 
-                let foundNode = findQuery("[data-coords='" + newCoord + "']")
-                if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
-                    newPlacedArray2.push(foundNode);
-                }
+            let cellCounts = {};
+            for (let i = 1; i < x; i++) {
+                cellCounts[i] = 0;
+                // newPlacedArray2.push(newPlacedArray[i]);
+
+                // how to properly fill cleared spaces
+                // look at each column,
+                
+                
+                
+                
+                
+                //IN PLACEDCELLSARRAY???????????????????????????????????
+
+
+
+                
+//                 for (let j = 1; j < y; j++) {
+//                     let coordStr = i + "," + j;
+//                     let foundItem = findQuery("[data-coords='" + coordStr + "']")
+//                     console.log(coordStr)
+//                     console.log(foundItem)
+//                     //count how many .placedCells are in each column, store data
+//                     if (foundItem.classList.contains('grid-item placedCell')) {
+//                         if (cellCounts[i]) { cellCounts += 1 }
+//                         else if (!cellCounts[i]) { cellCounts[i] = 1 }
+// i                    }
+
+//                 }
+//                 console.log(cellCounts)
+                // console.log(cellCounts)
+                // clear placedShapeCells Array
+                // go through each column again and add counts from bottom of board, calculating and pushing new coords to placedShapeCells array.
+
+
+
+
+                // let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, Number(fullLineID)); 
+                // let foundNode = findQuery("[data-coords='" + newCoord + "']")
+                // if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
+                //     newPlacedArray2.push(foundNode);
+                // }
             }
-            placedShapeCells = newPlacedArray2;
+            // placedShapeCells = newPlacedArray2;
 
         }
 
-        let awardPoints = (level, multiplier) => {
+        let evaluateLevels = () => {
+            let linesNeeded = currentLevel * 10
+            if (linesCleared === linesNeeded) { currentLevel += 1; }
+            let levelStat = document.getElementById('level');
+            levelStat.innerHTML = currentLevel;
+        }
+
+        let evaluatePoints = (multiplier) => {
             let increment = 100;
-            let points = (100 * level) * multiplier;
+            let points = (100 * currentLevel) * multiplier;
             console.log(points)
+            pointCount += points;
+            let pointStat = document.getElementById('points');
+            pointStat.innerHTML = pointCount;
         }
 
         // go through placed coords and look for patterns to reward points, increase streak, remove filled lines, and move down placed cells after lines are removed
@@ -382,22 +448,27 @@
                 if(cellRowCounts[placedCells[i][1]] === (x - 2)) {
 
                     // WHAT TO DO UPON FULL LINE
-                    console.log("line " + placedCells[i][1] + " is full! ->" + cellRowCounts[placedCells[i][1]])
+                    
+                //   console.log("line " + placedCells[i][1] + " is full! ->" + cellRowCounts[placedCells[i][1]])
                     removeLine(placedCells[i][1]);
+                    console.log("REMOVE ONE LINE ?????") //. .... its removing more than one line .... 
                     fullLines += 1;
                     // if( fullLines.length > 0 ) { removeLine(placedCells[i][1]); }
                     // console.log("found line")
                     // fullLines.push(placedCells[i][1])
                 }
             }
-            if (fullLines.length > 0) {
-                awardPoints(1, fullLines);
+            console.log(cellRowCounts)
+            // if full lines are detected, award points based on current state
+            if (fullLines > 0) {
+                evaluatePoints(fullLines);
+                evaluateLevels();
             }
 
-            console.log("full lines");
-            console.log(placedCells);
-            console.log(fullLines);
-            console.log(cellRowCounts);
+          // console.log("full lines");
+          // console.log(placedCells);
+          // console.log(fullLines);
+          // console.log(cellRowCounts);
             
         }
 
@@ -406,7 +477,7 @@
             // depending on if current shape can move or not
             // move currentShape coords downward one
             if (isNextOpen('down')) {
-                moveShape("down");
+                // moveShape("down");
             } else {
                 updatePlaced();
                 evaluatePlaced();
@@ -444,41 +515,6 @@
                 }
             }, 500)
         }
-
-        let shapeRotations = {
-            "rhombus":  {
-                0:   [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
-                90:  [[-1, +2], [0, +1], [0, +2],  [+1, +1]],
-                180: [[0, +1],  [0, +2], [+1, +2], [+1, +3]],
-                270: [[-1, +2], [0, +1], [0, +2],  [+1, +1]]
-            },
-            "tee" :  {
-                0:   [[0, +1],  [0, +2],  [+1, +2], [0, +3]], 
-                90:  [[-1, +2], [0, +2],  [+1, +2], [0, +3]], 
-                180: [[0, +1],  [0, +2],  [-1, +2], [0, +3]], 
-                270: [[0, +1],  [-1, +2], [0, +2],  [+1, +2]]
-            },     
-            "square" :  {
-                0:   [[0, +1], [0, +2], [+1, +1], [+1, +2]],
-                90:  [[0, +1], [0, +2], [+1, +1], [+1, +2]],
-                180: [[0, +1], [0, +2], [+1, +1], [+1, +2]],
-                270: [[0, +1], [0, +2], [+1, +1], [+1, +2]]
-            },
-            "line" :  {
-                0:   [[0, +1], [0, +2], [0, +3], [0, +4]], 
-                90:  [[-2, +2], [-1, +2], [0, +2], [+1, +2]],
-                180: [[0, +1], [0, +2], [0, +3], [0, +4]], 
-                270: [[-1, +2], [0, +2], [+1, +2], [+2, +2]]
-            },
-             "angle" :  {
-                0:   [[0, +1], [0, +2], [0, +3], [+1, +3]],
-                90:  [[-1, +3], [-1, +2], [0, +2], [+1, +2]],
-                180: [[-1, +1], [0, +1], [0, +2], [0, +3]], 
-                270: [[-1, +2], [0, +2], [+1, +2], [+1, +1]]
-             }
-        }
-
-        let currRotation = 0;
         
         // rotate piece 90 degrees based off shape rotations object, checks to see if would intersect wall and canceles if so
         let rotate = () => {
@@ -508,7 +544,9 @@
 
                 if (e.code === "ArrowDown") { 
                     currentDirection = "down";
-                    gameLogic(); 
+                    moveShape("down");
+                    gameLogic();
+                    drawBoard();   
                 } 
 
                 else if (e.code === "ArrowLeft") { 
