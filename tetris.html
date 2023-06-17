@@ -114,13 +114,13 @@
         let linesCleared = 0;
         let pointCount = 0;
         let currentLevel = 1;
+        let placedShapeCells = []; 
 
         // shape variables
         let startCell = (Math.round((x - 1) / 2)) + ",1"
         let currentRoot = startCell;
         let currentShape = undefined;
-        let currShapeCoords = [];
-        let placedShapeCells = [];        
+        let currShapeCoords = [];       
         let directions = { "left": [-1, 0], "down": [0, +1], "right": [+1, 0] }
 
         let currRotation = 0;
@@ -155,7 +155,7 @@
                 180: [[-1, +1], [0, +1], [0, +2], [0, +3]], 
                 270: [[-1, +2], [0, +2], [+1, +2], [+1, +1]]
              }
-        }
+        };
 
 
         // base grid
@@ -168,10 +168,9 @@
             for (i = 0; i < gridVolume; i++) {
                 if (i % x === 0) {
                     x_axis = 0; 
-                    y_axis += 1
+                    y_axis += 1;
                 }
-                x_axis += 1
-                // const grid = document.createElement("div");
+                x_axis += 1;
                 const gridItem = document.createElement('div');
                 gridItem.setAttribute('id', i);
                 let coords = x_axis + "," + y_axis;
@@ -188,6 +187,12 @@
                 if (x_axis === 1 || x_axis === x) {
                     gridItem.classList.add('wallCell');
                 }
+
+                // debug 
+                // if (y_axis === (y - 1) && x_axis > 1 && x_axis < x && x_axis != 6) {
+                //     gridItem.classList.add('placedCell');
+                //     placedShapeCells.push(gridItem);
+                // }
             }
         }
 
@@ -197,7 +202,7 @@
             let xCoord = Number(coordArray[0]);
             let yCoord = Number(coordArray[1]);
             xCoord += x; yCoord += y;
-            let newCoord = String(xCoord + ',' + yCoord)
+            let newCoord = String(xCoord + ',' + yCoord);
             return newCoord
         }
 
@@ -207,9 +212,9 @@
             for (let i = 0; i < gridVolume; i++) {
                 let gridElem = document.getElementById(i)
                 if (gridElem.classList.contains("shapeSegment")) {
-                    gridElem.classList.remove("shapeSegment") }
+                    gridElem.classList.remove("shapeSegment"); }
                 if (gridElem.classList.contains("placedCell")) {
-                    gridElem.classList.remove("placedCell")
+                    gridElem.classList.remove("placedCell");
                 } 
             }
 
@@ -223,18 +228,12 @@
             for (let i = 0; i < placedShapeCells.length; i++) {
                 placedShapeCells[i].classList.add('placedCell')
             }
-
-
-            //debug
-            if(currentDirection === "left") {
-                // console.log('drawboard done')
-            }
         }
 
         // execute game over
         let gameover = () => {
             gameStatus = false;
-            document.getElementById('gameStatus').innerHTML = 'GAMEOVER'
+            document.getElementById('gameStatus').innerHTML = 'GAMEOVER';
         }
 
         // generate shape from a root coordinate, if shape is not specified, shape with be random
@@ -243,24 +242,24 @@
             // get shape 
             let shapeName  = '';
             let shapes = ["z_block", "t_block", "block", "line", "l_block",
-                          "z_block", "t_block", "block","l_block",
+                          "z_block", "t_block", "block", "line", "l_block",
+                          "z_block", "t_block", "block", "l_block",
                           "z_block", "t_block", "block", "l_block",];
             if (shape === "random") { shapeName = shapes[Math.round(Math.random() * 5)] }
 
             // draw shape coords to array based off shapeName
 
             if (currentShape === undefined) { 
-                if (shapeName === "z_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["z_block"][0][i][0],  shapeRotations["z_block"][0][i][1])   )  }  } 
-                if (shapeName === "t_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["t_block"][0][i][0],  shapeRotations["t_block"][0][i][1])   )  }  }
-                if (shapeName === "block")    {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["block"][0][i][0],    shapeRotations["block"][0][i][1])     )  }  }
-                if (shapeName === "line")     {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["line"][0][i][0],     shapeRotations["line"][0][i][1])      )  }  }
-                if (shapeName === "l_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["l_block"][0][i][0],  shapeRotations["l_block"][0][i][1])   )  }  }     
+                if (shapeName === "z_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["z_block"][0][i][0],  shapeRotations["z_block"][0][i][1])   )  }  };
+                if (shapeName === "t_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["t_block"][0][i][0],  shapeRotations["t_block"][0][i][1])   )  }  };
+                if (shapeName === "block")    {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["block"][0][i][0],    shapeRotations["block"][0][i][1])     )  }  };
+                if (shapeName === "line")     {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["line"][0][i][0],     shapeRotations["line"][0][i][1])      )  }  };
+                if (shapeName === "l_block")  {  for (let i = 0; i < 4; i++) {  currShapeCoords.push( adjCoordStr(rootCoord,  shapeRotations["l_block"][0][i][0],  shapeRotations["l_block"][0][i][1])   )  }  };    
                 currentShape = shapeName;   
             }
 
             // (i) go through current shape coordinates     // (j) go through all placedCells and compare coords to current shape coordinates    // if match, gameover()
             for (let i = 0; i < currShapeCoords.length; i++) {
-                // console.log(currShapeCoords[i] + " compared to: ")
                 for (let j = 0; j < placedShapeCells.length; j++) {
                     if (currShapeCoords[i] === placedShapeCells[j].getAttribute('data-coords')) {
                         gameover();
@@ -277,11 +276,11 @@
             }
             let newRoot = '';
             if (dir === "down") {
-                newRoot = adjCoordStr(currentRoot, 0, +1)
+                newRoot = adjCoordStr(currentRoot, 0, +1);
             } else if (dir === "left") {
-                newRoot = adjCoordStr(currentRoot, -1, 0)
+                newRoot = adjCoordStr(currentRoot, -1, 0);
             } else if (dir === "right") {
-                newRoot = adjCoordStr(currentRoot, +1, 0)
+                newRoot = adjCoordStr(currentRoot, +1, 0);
             }
             currentRoot = newRoot;
         }
@@ -326,15 +325,13 @@
                 }
             } 
             if (isOpen === undefined) { isOpen = false }
-            // console.log("isNextDone")
             return isOpen
         }
 
-        // after a shape lands, add its coordinates to placedShapes array
+        // after a shape lands, add its coordinates to placedShapes array, 
         let updatePlaced = () => {
             for (let i = 0; i < currShapeCoords.length; i++) {
-                // console.log("test: " + currShapeCoords[i])
-                let shapeCell = findQuery('[data-coords="' + currShapeCoords[i] + '"]')
+                let shapeCell = findQuery('[data-coords="' + currShapeCoords[i] + '"]');
                 placedShapeCells.push(shapeCell);
             }
         }
@@ -349,140 +346,122 @@
             cellRowCounts = {};
         }
 
+        // remove line across x_axis
         let removeLine = (fullLineID) => {
-
             // go through placed cells and remove lines that have the same y-axis number as whats passed into the function
             let newPlacedArray = [];
             for (let i = 0; i < placedShapeCells.length; i++) {
                 // newPlacedArray.push(placedShapeCells[i])
-                let coord = placedShapeCells[i].getAttribute('data-coords').split(",")
+                let coord = placedShapeCells[i].getAttribute('data-coords').split(",");
                 if (Number(coord[1]) != Number(fullLineID) ) {
-                    newPlacedArray.push(placedShapeCells[i])
-                    placedShapeCells[i].classList.remove('placedCell')
+                    placedShapeCells[i].classList.remove('placedCell');
+                    newPlacedArray.push(placedShapeCells[i]);
                 }
             }
-            
-// NEED TO: make cells drop correctly after line clear
-            let newPlacedArray2 = [];
-            let cellCounts = {};
-            for (let i = 1; i < x; i++) {
-                cellCounts[i] = 0;
-                // newPlacedArray2.push(newPlacedArray[i]);
-
-                // how to properly fill cleared spaces
-                // look at each column,
+            placedShapeCells = newPlacedArray;
+        }                
                 
-                
-                
-                
-                
-                //IN PLACEDCELLSARRAY???????????????????????????????????
-
-
-
-                
-//                 for (let j = 1; j < y; j++) {
-//                     let coordStr = i + "," + j;
-//                     let foundItem = findQuery("[data-coords='" + coordStr + "']")
-//                     console.log(coordStr)
-//                     console.log(foundItem)
-//                     //count how many .placedCells are in each column, store data
-//                     if (foundItem.classList.contains('grid-item placedCell')) {
-//                         if (cellCounts[i]) { cellCounts += 1 }
-//                         else if (!cellCounts[i]) { cellCounts[i] = 1 }
-// i                    }
-
-//                 }
-//                 console.log(cellCounts)
-                // console.log(cellCounts)
-                // clear placedShapeCells Array
-                // go through each column again and add counts from bottom of board, calculating and pushing new coords to placedShapeCells array.
-
-
-
-
-                // let newCoord = adjCoordStr(newPlacedArray[i].getAttribute("data-coords"), 0, Number(fullLineID)); 
-                // let foundNode = findQuery("[data-coords='" + newCoord + "']")
-                // if (foundNode != undefined && !foundNode.classList.contains('floorCell')) {
-                //     newPlacedArray2.push(foundNode);
-                // }
-            }
-            // placedShapeCells = newPlacedArray2;
-
-        }
-
+        // determine level player is on
         let evaluateLevels = () => {
-            let linesNeeded = currentLevel * 10
-            if (linesCleared === linesNeeded) { currentLevel += 1; }
+            let linesNeeded = currentLevel * 10;
+            if (linesCleared === linesNeeded) { currentLevel += 1; };
             let levelStat = document.getElementById('level');
             levelStat.innerHTML = currentLevel;
+            console.log("lines needed: " + linesNeeded);
+            console.log("lines cleared: " + linesCleared)
         }
 
+        // determine points player currently has
         let evaluatePoints = (multiplier) => {
             let increment = 100;
             let points = (100 * currentLevel) * multiplier;
-            console.log(points)
             pointCount += points;
             let pointStat = document.getElementById('points');
             pointStat.innerHTML = pointCount;
         }
 
+        // after line(s) is cleared, move remaining placed cells downward
+        let gravity = () => {
+            // write code to go through cells and drop all placed cells downward 
+            placedShapeCells = [];
+            // loop through each column
+            for (let i = 1; i <= x; i++) {
+                // execute code if i isnt equal to isnt 1 or grid width
+                if (i != 1 && i != x) {
+                    // while looping through each column, loop through the column per column counts for each, then add placedCells
+                    for (let j = 0; j < columnCounts[i]; j++) {
+                        let coordStr = String(i + ',' + ((y - 1) - j));
+                        placedShapeCells.push( findQuery("[data-coords='" + coordStr + "']") )
+                    }
+                }
+            }
+        }
+
         // go through placed coords and look for patterns to reward points, increase streak, remove filled lines, and move down placed cells after lines are removed
         let evaluatePlaced = () => {
             let placedCells = [];
+            columnCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0 };
             // go througgh placedCell dom array and pull coord attr
             for (let i = 0; i < placedShapeCells.length; i++) {
-                let coords = placedShapeCells[i].getAttribute('data-coords').split(",")
-                placedCells.push(coords)
+                let coords = placedShapeCells[i].getAttribute('data-coords').split(",");
+                placedCells.push(coords);
             }
 
             let fullLines = 0;
             let cellRowCounts = {};
-            // go through placedCells and add to, init value, or indicate fullline, for a given iter
+            // go through row cells add to count, init count, or find when a line is full
             for (let i = 0; i < placedCells.length; i++) {
                 if(cellRowCounts[placedCells[i][1]] && cellRowCounts[placedCells[i][1]] != (x - 2)) {
                     cellRowCounts[placedCells[i][1]] += 1;
                 } else {
                     cellRowCounts[placedCells[i][1]] = 1;
                 }
-                if(cellRowCounts[placedCells[i][1]] === (x - 2)) {
-
-                    // WHAT TO DO UPON FULL LINE
-                    
-                //   console.log("line " + placedCells[i][1] + " is full! ->" + cellRowCounts[placedCells[i][1]])
+                if(cellRowCounts[placedCells[i][1]] === (x - 2)) {                    
                     removeLine(placedCells[i][1]);
-                    console.log("REMOVE ONE LINE ?????") //. .... its removing more than one line .... 
                     fullLines += 1;
-                    // if( fullLines.length > 0 ) { removeLine(placedCells[i][1]); }
-                    // console.log("found line")
-                    // fullLines.push(placedCells[i][1])
+                    linesCleared += 1;
                 }
             }
-            console.log(cellRowCounts)
-            // if full lines are detected, award points based on current state
+
+            // go through grid and count how many placed segments are in each column
+            drawBoard();
+            // look at each column,
+            for (let i = 1; i < x; i++) {
+                // look at each cell in a column
+                if (i > 1 && i < y) {
+                    for (let j = 1; j < y; j++) {
+                        // create x,y coord from loop iters and find item
+                        let coordStr = i + "," + j;
+                        let foundItem = findQuery("[data-coords='" + coordStr + "']");
+                        // if an item is found, and if that item has class placedCell, add 1 to given column count
+                        if (foundItem.classList.contains('placedCell') ) {
+                                columnCounts[i] += 1;
+                        }
+                    }
+                }
+            };
+
+           // if full lines are detected, award points based on current state
             if (fullLines > 0) {
                 evaluatePoints(fullLines);
                 evaluateLevels();
+                gravity();
             }
-
-          // console.log("full lines");
-          // console.log(placedCells);
-          // console.log(fullLines);
-          // console.log(cellRowCounts);
-            
         }
 
         // code to be executed each tick
         let eachTick = () => {
             // depending on if current shape can move or not
             // move currentShape coords downward one
+
             if (isNextOpen('down')) {
-                // moveShape("down");
+                moveShape("down");
             } else {
                 updatePlaced();
                 evaluatePlaced();
                 newShape();
             }
+            drawBoard();
         }
 
         // execute logic based off state of game 
@@ -493,19 +472,26 @@
                 generateShape(startCell, "random");
             } else if (currentShape != undefined && gameStatus != false) {
                 eachTick();
-                drawBoard();
             } else if (gameStatus === false) {
-                // gameover code
+                gameover();
             }
+        }
+
+        let gameSpeed = (base=500) => {
+            let currentSpeed;
+            if (currentLevel > 1) {
+                let deviation = currentLevel * 10;
+                currentSpeed = base - deviation;                
+            } else {
+                currentSpeed = base;
+            }
+            return currentSpeed;
         }
 
         // game looping with 0.5s ticks
         let gameLoop = () => {
 
             gameLogic();
-            // debug stuff
-            // console.log("------------------------- debug")
-            // console.log(placedShapeCells)
 
             // tick delay
             setTimeout(() => {
@@ -513,7 +499,7 @@
                 if (gameStatus) {
                     gameLoop();
                 }
-            }, 500)
+            }, gameSpeed() )
         }
         
         // rotate piece 90 degrees based off shape rotations object, checks to see if would intersect wall and canceles if so
@@ -525,10 +511,10 @@
                 for (let i = 0; i < 4; i++) {  
                     let newCoord = adjCoordStr(currentRoot,  
                                     shapeRotations[currentShape][currRotation][i][0],  
-                                    shapeRotations[currentShape][currRotation][i][1] )
+                                    shapeRotations[currentShape][currRotation][i][1] );
                     if (document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('wallCell') ||
                         document.querySelectorAll("[data-coords='" + newCoord + "']")[0].classList.contains('placedCell') ) {
-                        currShapeCoords = prevShape
+                        currShapeCoords = prevShape;
                         break;
                     } else {
                         currShapeCoords.push( newCoord );
@@ -544,9 +530,8 @@
 
                 if (e.code === "ArrowDown") { 
                     currentDirection = "down";
-                    moveShape("down");
-                    gameLogic();
-                    drawBoard();   
+                    eachTick();
+                    drawBoard(); 
                 } 
 
                 else if (e.code === "ArrowLeft") { 

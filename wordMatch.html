@@ -29,8 +29,9 @@
             --text-blue: #0f275d;
             --text-red: #f0a9a9;
             --light-gray: #ebebeb;
-            --col-amt: 10;
-            --cell-size: 50px;
+            --col-amt: 4;
+            --row-amt: 6;
+            --cell-size: 100px;
         }
 
         * {
@@ -39,13 +40,14 @@
 
         #letterMatch {
             width: calc(var(--cell-size) * var(--col-amt));
+            height: 800px;
         }
 
         #grid div {
             grid-column: auto;
-            font-size: 25px;
+            font-size: 40px;
             text-align: center;
-            /* padding-top: 10px; */
+            padding-top: 25px;
         }
 
         #grid {
@@ -54,6 +56,10 @@
             grid-row-gap: 3px;
             grid-template-columns: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
             grid-template-rows: repeat(var(--col-amt), minmax(var(--cell-size), var(--cell-size)));
+        }
+
+        .grid-item {
+            height: 75px;
         }
 
         .grid-item.red {
@@ -123,8 +129,11 @@
         /////////////////////////////////////////////////
 
         // data 
-        let x = 8;
-        let y = 8;
+        let x = 4;
+        let y = 6;
+        let currentWordIter = 0;
+        let roundNumber = 0;
+        let letterNumber = 0;
 
         let words = ["AB", "TESTB", "MEH"];
         words = words.map( function(x) { return x.toUpperCase(); });
@@ -142,9 +151,9 @@
             }
         };
 
-        let handleGridClick = (elem) => {
-            console.log(elem)
-        }
+        // let handleGridClick = (elem) => {
+        //     console.log(elem)
+        // }
 
         // base grid
         let makeGrid = (x, y) => {
@@ -199,86 +208,100 @@
             }
         }
 
-        let generateIndicator = (currentword) => {
+        let generateIndicator = (currentWordString) => {
             if (document.getElementsByClassName('ind') != undefined) {
                 let existing = document.getElementById('indicator');
                 while(existing.firstChild) {
                     existing.removeChild(existing.lastChild);
                 }
             }
-            for (let i = 0; i < currentword.length; i++) {
+            for (let i = 0; i < currentWordString.length; i++) {
                 const indicatorSection = document.createElement('div');
                 indicatorSection.setAttribute('class', 'ind')
-                let letter = document.createTextNode(currentword[i]);
+                let letter = document.createTextNode(currentWordString[i]);
                 indicatorSection.appendChild(letter)
                 let container = document.getElementById('indicator')
                 container.appendChild(indicatorSection)
             }
         }
 
+        // function to place word on board based off round number
+        let placeWord = (iter) => {
+            for (let i = 0; i < words[iter].length; i++) {
+                let randomGridID = Math.round(Math.random()*gridVolume);
+                let randomGridElem = document.getElementById(randomGridID)
+                randomGridElem.innerHTML = words[iter][i]
+            }
+        }
+
+        // word and round progress handler
+        let checkMatch = (letter) => {
+            // console.log("does " + letter + " equal " + words[currentWordIter][letterNumber])
+            if (letter === words[currentWordIter][letterNumber]) {
+                letterNumber += 1;
+                updateIndicator();
+            }
+            if (letterNumber >= words[currentWordIter].length) {
+                setTimeout(newRound, 1000)
+            }
+        }
+
+        let loopWordlist = (currWordIter) => {
+            if (currWordIter % words.length === 0) {
+                iter = 0;
+                currentWordIter = 0;
+                console.log(window)
+                console.log(currentWordIter)
+            } else {
+                iter = currWordIter;
+            }
+            console.log(iter)
+            return iter
+        }
+
+        // new round handle
+        let newRound = (round) => {
+
+            if (round === 'first') { 
+                fillGrid(); 
+                placeWord(currentWordIter);
+                generateIndicator( words[currentWordIter] ); 
+            };
+
+            if (round === undefined) { 
+                roundNumber += 1; 
+                currentWordIter += 1; 
+                letterNumber = 0;
+                fillGrid('reset'); 
+                let nextIter = loopWordlist(currentWordIter);
+                placeWord(nextIter );
+                generateIndicator( words[ nextIter ]); 
+            };
+            
+        }
+
+        let updateIndicator = () => {
+            let letterCells = document.getElementsByClassName('ind');
+            for (let i = 0; i < letterNumber; i++) {
+                letterCells[i].setAttribute('class', 'ind HL');
+            }
+        } 
+        
+        // fucntions on grid item clicked
+        let handleGridClick = (item) => {
+            console.log(item.innerHTML);
+            checkMatch(item.innerHTML);
+        }
+
         let gameLogic = (x, y) => {
 
             // status variables 
-            let currentWord = 0;
-            let roundNumber = 0;
-            let letterNumber = 0;
-
-            let updateIndicator = () => {
-                let letterCells = document.getElementsByClassName('ind');
-                for (let i = 0; i < letterNumber; i++) {
-                    letterCells[i].setAttribute('class', 'ind HL');
-                }
-            } 
-            
-            // fucntions on grid item clicked
-            let handleGridClick = (item) => {
-                console.log(item.innerHTML);
-                checkMatch(item.innerHTML);
-            }
-
             // get grid items and put listeners
             let gridItems = document.getElementsByClassName("grid-item")
             for (let i = 0; i < gridItems.length; i++) {
                 gridItems[i].addEventListener("mouseup", (e) => { handleGridClick(gridItems[i]) });
             }
 
-            // function to place word on board based off round number
-            let placeWord = (iter) => {
-                for (let i = 0; i < words[iter].length; i++) {
-                    let randomGridID = Math.round(Math.random()*gridVolume);
-                    let randomGridElem = document.getElementById(randomGridID)
-                    randomGridElem.innerHTML = words[iter][i]
-                }
-            }
-
-            // word and round progress handler
-            let checkMatch = (letter) => {
-                if (letter === words[currentWord][letterNumber]) {
-                    letterNumber += 1;
-                    updateIndicator();
-                }
-                if (letterNumber >= words[currentWord].length) {
-                    setTimeout(newRound, 1000)
-                }
-            }
-
-            // new round handle
-            let newRound = (round) => {
-
-                if (round === 'first') { 
-                    roundNumber += 0; 
-                    currentWord += 0; 
-                    fillGrid(); };
-
-                if (round === undefined) { 
-                    roundNumber += 1; 
-                    currentWord += 1; 
-                    letterNumber = 0;
-                    fillGrid('reset'); };
-
-                placeWord(currentWord);
-                generateIndicator(words[currentWord]);
-            }
 
             newRound('first');
         }

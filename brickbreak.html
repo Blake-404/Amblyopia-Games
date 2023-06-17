@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+  <head><link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geologica:wght@100;400;700;900&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+
+    <div id="brickbreak">
+        <div id="gameMarginTop"></div>
+        <div id="grid"></div>   
+        <div id="gameMarginBottom"></div>     
+    </div>
+
+
+    <style>
+        #grid {
+            width: 500px;
+            height: 500px;
+        }
+    </style>
+
+    <script>
+        // key listeners
+
+        const gridItem = document.createElement('div');
+        gridItem.setAttribute('id', i);
+        let coords = x_axis + "," + y_axis;
+        gridItem.setAttribute('data-coords', coords);
+        gridItem.setAttribute('class', 'grid-item');
+        let text = document.createTextNode('');
+        gridItem.appendChild(text);
+        let grid = document.getElementById('grid');
+        grid.appendChild(gridItem);
+
+        let gameLogic = () => {
+
+            let names = {
+                fname: "Blake",
+                lname: "Frye",
+                arr: [1, 2, 3, 4],
+            }
+            console.log(names.fname)
+            console.log(names.hasOwnProperty("mname"));
+            console.log(names.propertyIsEnumerable("arr"))
+            console.log(names)
+            
+        }
+
+        // controller
+        let runGame = () => {
+            // makeGrid(x, y);
+            gameLogic();
+        }
+
+        window.onload = runGame();
+
+    </script>
+
+  </body>
+</html>
